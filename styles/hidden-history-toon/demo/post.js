@@ -43,6 +43,7 @@ const cocShader = {
       float cb = sign(dy) * bandAmp * pow(max(0., abs(dy) - bandW) / .5, bandPow);
       float c = clamp(mix(cp, cb, bandMix), -maxCoc, maxCoc);
       vec3 col = texture2D(tColor, vUv).rgb;   // linear filtering = 2×2 box downsample
+      if (any(isnan(col)) || any(isinf(col))) col = vec3(0.); col = min(col, vec3(64.));   // one NaN/Inf pixel would spread through the blur and the bloom into a black block
       if (aoAmt > 0.) col *= mix(1., pow(texture2D(tAO, vUv).r, 1.5), aoAmt);
       if (inkAmt > 0.) {
         vec2 r = inkR / srcRes; float wc = wAt(vUv);
@@ -82,7 +83,7 @@ const gatherShader = {
         float w = smoothstep(r - 1.5, r + .5, sa) / (sa*sa + 1.);
         acc += s.rgb * w; wsum += w;
       }
-      gl_FragColor = vec4(acc / wsum, 1.);
+      vec3 o = acc / max(wsum, 1e-4); if (any(isnan(o))) o = c0.rgb; gl_FragColor = vec4(o, 1.);
     }`
 };
 

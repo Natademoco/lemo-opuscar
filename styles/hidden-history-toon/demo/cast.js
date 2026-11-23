@@ -77,6 +77,13 @@ export function drawPerson(g, o) {
   if (o.prop === 'coins') { const [x, y] = hands.r; for (let i = 0; i < 3; i++) blob(g, '#e3b341', 5, ell(g, x + 4, y - 26 - i * 13, 24, 9)); }
   if (o.prop === 'fan') { const [x, y] = hands.r; blob(g, '#f2e6c8', 6, () => { g.moveTo(x, y); g.arc(x, y, 110, -Math.PI * .95, -Math.PI * .45); g.closePath(); }); for (let a = -.95; a <= -.45; a += .1) line(g, [[x, y], [x + Math.cos(a * Math.PI) * 108, y + Math.sin(a * Math.PI) * 108]], 3); }
   if (o.prop === 'block') { const [x1, y1] = hands.l, [x2] = hands.r; blob(g, '#d6f1f8', 8, rrect(g, x1 - 10, y1 - 110, x2 - x1 + 20, 130, 14)); line(g, [[x1 + 20, y1 - 80], [x1 + 70, y1 - 30]], 4); }
+  let mouth = null;
+  if (o.prop === 'bucket') { // a tin bucket held up in both hands and tipped left; its mouth is returned so the 3D pour can start there
+    const [x, y] = hands.l, a = -2.0, bx0 = x - 20, by0 = y - 40; g.save(); g.translate(bx0, by0); g.rotate(a);   // tipped past horizontal: the mouth faces down-left
+    blob(g, '#9aa0a6', 8, () => { g.moveTo(-70, -60); g.lineTo(70, -60); g.lineTo(52, 70); g.lineTo(-52, 70); g.closePath(); });
+    blob(g, '#c99a5e', 6, ell(g, 0, -60, 70, 16)); line(g, [[-52, 20], [52, 20]], 4); g.restore();
+    mouth = [bx0 + 60 * Math.sin(a), by0 - 60 * Math.cos(a)];   // the centre of the rim (0, −60) after the rotation
+  }
   for (const k of ['l', 'r']) blob(g, HEAD, 7, ell(g, hands[k][0], hands[k][1], 22, 22));
   // head
   blob(g, E.flush ? '#f2b9a4' : HEAD, 0, ell(g, hx, hy, hrx, hry));
@@ -134,12 +141,21 @@ export function drawPerson(g, o) {
     blob(g, '#8c2f2f', 0, () => g.rect(hx - w / 2 + 5, top + 168, w - 10, 30));
     blob(g, c, 9, ell(g, hx, hy - hry + 22, w * .82, 24));
   }
+  if (o.prop === 'blockUp') {   // a block of ice held overhead, resting on the cap; drawn last, the hands on top of it
+    const [x1, y1] = hands.l, [x2] = hands.r;
+    blob(g, '#d6f1f8', 8, rrect(g, x1 - 8, y1 - 150, x2 - x1 + 16, 158, 16)); line(g, [[x1 + 30, y1 - 120], [x1 + 90, y1 - 50]], 4); line(g, [[x2 - 60, y1 - 130], [x2 - 30, y1 - 100]], 4);
+    for (const [hx2, hy2] of [hands.l, hands.r]) blob(g, HEAD, 7, ell(g, hx2, hy2, 22, 22));
+  }
+  return { hands, mouth };
 }
 
 // One card per character. Textures are cached by pose key, so changing expression is a texture swap (the expression snap).
+// Grounding: the drawing's shoes sit on y = 0; a hidden twin with thickened alpha casts the shadow (stick legs alone cast almost nothing,
+// so the shadow seemed to start at the body); a soft contact shadow lies on the ground just behind the feet.
+const FEET = 1250, BLOB = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d'), r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(0,0,0,1)'); r.addColorStop(.55, 'rgba(0,0,0,.6)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv); })();
 export function makeCard(scene, o) {
-  const H = o.h ?? 1.75, Wd = H * CW / CH;
-  const geo = new THREE.PlaneGeometry(Wd, H); geo.translate(0, H / 2, 0);
+  const H = o.h ?? 1.75, Wd = H * CW / CH, foot = H * (CH - FEET) / CH;
+  const geo = new THREE.PlaneGeometry(Wd, H); geo.translate(0, H / 2 - foot, 0);
   const mat = new THREE.MeshBasicMaterial({ alphaTest: .5, side: THREE.DoubleSide, transparent: false });
   // rim light: a second texture (alpha = rim mask) adds the key's colour along the edges that face the key, just inside the ink line
   const U = { rimMap: { value: null }, rimCol: { value: new THREE.Color(0, 0, 0) } };
@@ -147,31 +163,44 @@ export function makeCard(scene, o) {
     Object.assign(sh.uniforms, U);
     sh.fragmentShader = 'uniform sampler2D rimMap; uniform vec3 rimCol;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb += texture2D(rimMap, vMapUv).a * rimCol;');
   };
-  const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = true; scene.add(mesh);
+  const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = false; scene.add(mesh);
+  const shMat = new THREE.MeshBasicMaterial({ alphaTest: .5, side: THREE.DoubleSide, colorWrite: false, depthWrite: false });
+  const shadow = new THREE.Mesh(geo, shMat); shadow.castShadow = true; mesh.add(shadow);
+  const contact = new THREE.Mesh(new THREE.PlaneGeometry(Wd * .8, Wd * .42).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: BLOB, color: '#000', transparent: true, opacity: .5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }));
+  contact.position.set(0, .003, -Wd * .08); contact.renderOrder = 2; mesh.add(contact);
   const cache = new Map();
   const card = {
-    mesh, opts: { ...o },
+    mesh, contact, opts: { ...o }, anchor: null, H, Wd,
     set(p = {}) {
       Object.assign(card.opts, p);
       const key = JSON.stringify(card.opts);
       if (!cache.has(key)) {
         const cv = document.createElement('canvas'); cv.width = CW; cv.height = CH;
-        drawPerson(cv.getContext('2d'), card.opts);
+        const info = drawPerson(cv.getContext('2d'), card.opts);
         const tx = new THREE.CanvasTexture(cv); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 8;
-        // rim mask = drawing shifted 10 px from the key side, minus the drawing shifted 30 px: a band inside the outline facing the key
+        // rim mask = drawing shifted 11 px from the key side, minus the drawing shifted 32 px: a band inside the outline facing the key
         const rm = document.createElement('canvas'); rm.width = CW; rm.height = CH; const r = rm.getContext('2d'), kd = card.opts.keyDir ?? -1;
         r.drawImage(cv, -kd * 11, 0); r.globalCompositeOperation = 'destination-out'; r.drawImage(cv, -kd * 32, 0);
         r.globalCompositeOperation = 'destination-in'; r.drawImage(cv, 0, 0);
-        const rt = new THREE.CanvasTexture(rm);
-        cache.set(key, [tx, rt]);
+        // shadow twin: the drawing's alpha thickened by 9 px in every direction
+        const sm = document.createElement('canvas'); sm.width = CW; sm.height = CH; const sg = sm.getContext('2d');
+        for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; sg.drawImage(cv, Math.cos(a) * 9, Math.sin(a) * 9); }
+        cache.set(key, { tx, rt: new THREE.CanvasTexture(rm), st: new THREE.CanvasTexture(sm), mouth: info.mouth });
       }
-      [mat.map, U.rimMap.value] = cache.get(key); mat.needsUpdate = true;
+      const c = cache.get(key);
+      if (mat.map !== c.tx) { mat.map = c.tx; U.rimMap.value = c.rt; shMat.map = c.st; mat.needsUpdate = shMat.needsUpdate = true; }
+      card.anchor = c.mouth;
       return card;
     },
     // yaw toward the camera; tint = how the key light colours the drawing
     face(camera, tint = '#ffffff', k = 1, rim = '#000000', rk = 1) {
       const p = mesh.position; mesh.rotation.y = Math.atan2(camera.position.x - p.x, camera.position.z - p.z);
       mat.color.set(tint).multiplyScalar(k); U.rimCol.value.set(rim).multiplyScalar(rk);
+    },
+    // a point of the drawing (canvas px) in world space, for props that leave the card (the pour)
+    point(camera, cx, cy) {
+      card.face(camera); mesh.updateMatrixWorld();
+      return mesh.localToWorld(new THREE.Vector3((cx / CW - .5) * Wd, (FEET - cy) / CH * H, 0));
     },
   };
   return card.set();

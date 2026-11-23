@@ -75,7 +75,7 @@ export function dust(scene, { box, n = 300, col = '#ffe6bf', size = 6, seed = 7 
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const m = new THREE.ShaderMaterial({
     uniforms: { col: { value: new THREE.Color(col) }, size: { value: size } },
-    vertexShader: `uniform float size; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.); gl_PointSize = size * 10. / -mv.z; gl_Position = projectionMatrix * mv; }`,
+    vertexShader: `uniform float size; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.); gl_PointSize = max(2., size * 10. / -mv.z); gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `uniform vec3 col; void main(){ float d = length(gl_PointCoord - .5); gl_FragColor = vec4(col * smoothstep(.5, .1, d) * .6, 1.); }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
   });
@@ -104,8 +104,9 @@ export function fall(scene, { box, n = 400, col = '#ffffff', size = 7, v = .6, s
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const m = new THREE.ShaderMaterial({
     uniforms: { col: { value: new THREE.Color(col) }, size: { value: size } },
-    vertexShader: `uniform float size; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.); gl_PointSize = size * 10. / -mv.z; gl_Position = projectionMatrix * mv; }`,
+    vertexShader: `uniform float size; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.); gl_PointSize = max(2., size * 10. / -mv.z); gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `uniform vec3 col; void main(){ if (length(gl_PointCoord - .5) > .5) discard; gl_FragColor = vec4(col, 1.); }`,
+    transparent: true, depthWrite: false,   // no depth: otherwise the ink pass rings every flake and snow turns into dark specks
   });
   const pts = new THREE.Points(geo, m); pts.frustumCulled = false; scene.add(pts);
   const hgt = box.max.y - box.min.y;

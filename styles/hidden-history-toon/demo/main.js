@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { makePost } from './post.js';
+import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { mulberry, lerp, clamp, seg, eo, ss } from '/core/lib.js';
 import { W, H, planks, sawdust, ice, plaster, mat, godRay, dust, fall, signTex, bubbles, caption } from './world.js';
 import { makeCard } from './cast.js';
@@ -17,7 +18,7 @@ renderer.setPixelRatio(1); renderer.setSize(W, H);
 renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.getElementById('stage').appendChild(renderer.domElement);
-const mixC = document.getElementById('mix'), gm = mixC.getContext('2d'), ov = document.getElementById('ov'), g2 = ov.getContext('2d');
+const ov = document.getElementById('ov'), g2 = ov.getContext('2d');
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2('#3b2a1e', .035);
@@ -42,37 +43,55 @@ const FLOOR = mat(sawdust('#b98a52', { rep: [5, 6] })), SAW = mat(sawdust('#c79a
 const BEAM = mat(planks('#4a3020', { n: 2, seed: 13 }));
 const ICE = mat(ice(), { rough: .4, col: '#eefaff', emissive: '#7cc4dc', ei: .32 });   // pale inner glow stands in for translucency
 const iceGeo = new RoundedBoxGeometry(.72, .5, .72, 3, .06);
-add(new THREE.PlaneGeometry(8, 10).rotateX(-Math.PI / 2), FLOOR, 0, 0, -3, { cast: false });
+// Measured so nothing interpenetrates: floor z −7.0…+2.0 ends at the back wall's inner face (the street starts outside it).
+add(new THREE.PlaneGeometry(6.3, 9).rotateX(-Math.PI / 2), FLOOR, 0, 0, -2.5, { cast: false });
 add(box(.3, 4.2, 10), WALL, -3.15, 2.1, -3); add(box(.3, 4.2, 10), WALL, 3.15, 2.1, -3);
 const DX0 = .7, DX1 = 2.3, DH = 2.6;
 add(box(DX0 + 3.3, 4.2, .3), WALL2, (-3.3 + DX0) / 2, 2.1, -7.15);
 add(box(3.3 - DX1, 4.2, .3), WALL2, (DX1 + 3.3) / 2, 2.1, -7.15);
 add(box(DX1 - DX0, 4.2 - DH, .3), WALL2, (DX0 + DX1) / 2, DH + (4.2 - DH) / 2, -7.15);
 add(box(.18, DH, .36), BEAM, DX0 - .09, DH / 2, -7.1); add(box(.18, DH, .36), BEAM, DX1 + .09, DH / 2, -7.1); add(box(DX1 - DX0 + .36, .2, .36), BEAM, (DX0 + DX1) / 2, DH + .1, -7.1);
-add(box(8, .3, 10), WALL2, 0, 4.25, -3);
-for (let z = -6.5; z <= 1; z += 1.5) add(box(6.4, .26, .26), BEAM, 0, 3.9, z);
-const doorPivot = new THREE.Group(); doorPivot.position.set(DX1, 0, -7.0); SHED.add(doorPivot);
-const leaf = new THREE.Mesh(box(1.6, 2.55, .1), WALL2); leaf.position.set(-.8, 1.28, 0); leaf.castShadow = leaf.receiveShadow = true; doorPivot.add(leaf);
+add(new THREE.PlaneGeometry(DX1 - DX0, .3).rotateX(-Math.PI / 2), BEAM, (DX0 + DX1) / 2, .004, -7.15, { cast: false });   // threshold board
+add(box(8, .3, 10), WALL2, 0, 4.25, -3);                                                   // ceiling, underside at y 4.10
+for (let z = -6.5; z <= 1; z += 1.5) add(box(6.0, .26, .26), BEAM, 0, 3.97, z);           // beams touch the ceiling (top at 4.10) and end at the walls (±3.0)
+const doorPivot = new THREE.Group(); doorPivot.position.set(DX1 - .05, 0, -6.86); SHED.add(doorPivot);   // hinge in front of the jamb, so the leaf never cuts the frame
+const leaf = new THREE.Mesh(box(1.5, 2.5, .08), WALL2); leaf.position.set(-.75, 1.26, 0); leaf.castShadow = leaf.receiveShadow = true; doorPivot.add(leaf);
+// the ice stack: 3 × 5 × 3 blocks (.72 × .5 × .72) at .84 pitch; sawdust packed between them (a core box) and in a layer above each course
+const SX0 = -2.55, SZ0 = -6.2, P = .84, CY = .6;
 for (let ix = 0; ix < 3; ix++) for (let iz = 0; iz < 5; iz++) for (let iy = 0; iy < 3; iy++) {
-  if (iy === 2 && R() < .35) continue;
-  const b = add(iceGeo, ICE, -2.55 + ix * .84 + (R() - .5) * .05, .27 + iy * .6, -6.2 + iz * .84); b.rotation.y = (R() - .5) * .06;
+  const b = add(iceGeo, ICE, SX0 + ix * P + (R() - .5) * .02, .25 + iy * CY, SZ0 + iz * P); b.rotation.y = (R() - .5) * .03;
 }
-for (let iy = 0; iy < 3; iy++) add(box(2.5, .1, 4.3), SAW, -1.7, .55 + iy * .6, -4.5);
-mound(SHED, -1.7, 1.7, -4.5, 1.35, .45, 2.3, SAW);
-mound(SHED, -.75, .05, -1.9, .5, .28, .55, SAW); mound(SHED, -2.4, .05, -1.6, .7, .3, .5, SAW); mound(SHED, .6, .02, -3.6, .6, .18, .8, SAW);
-add(iceGeo, ICE, 1.25, .25, -3.1).rotation.y = .5;
-add(new THREE.CylinderGeometry(.03, .03, 1.5, 8), BEAM, 1.15, .75, -2.0).rotation.z = .35;
-add(box(.3, .38, .04), new THREE.MeshStandardMaterial({ color: '#7d7a76', roughness: .5, metalness: .3 }), 1.42, .1, -2.0).rotation.z = .35;
-// a block lowered onto the stack (shot 7), the bucket pouring sawdust (shot 8)
-const newBlock = add(iceGeo, ICE, -1.0, 2.2, -2.2);
-const bucket = add(new THREE.CylinderGeometry(.24, .18, .36, 20, 1, true), new THREE.MeshStandardMaterial({ color: '#8c8a86', roughness: .45, metalness: .5, side: THREE.DoubleSide }), -1.5, 3.1, -2.4);
-bucket.rotation.z = 2.1;
-const pourN = 500, pourPos = new Float32Array(pourN * 3), pourGeo = new THREE.BufferGeometry(); pourGeo.setAttribute('position', new THREE.BufferAttribute(pourPos, 3));
-const pour = new THREE.Points(pourGeo, new THREE.PointsMaterial({ color: '#d9a865', size: .035 })); pour.frustumCulled = false; SHED.add(pour);
-const pourMound = mound(SHED, -1.75, 1.75, -2.45, .5, .05, .5, SAW);
-function pourAt(t) {
-  const r = mulberry(4), sx = -1.72, sy = 2.95, sz = -2.42;
-  for (let i = 0; i < pourN; i++) { const ph = (r() + t * 1.6) % 1, y = sy - ph * ph * 1.3 - ph * .1; pourPos[i * 3] = sx + (r() - .5) * .08 * (1 + ph * 2); pourPos[i * 3 + 1] = y; pourPos[i * 3 + 2] = sz + (r() - .5) * .08 * (1 + ph * 2); }
+const STK = { x0: SX0 - .36, x1: SX0 + 2 * P + .36, z0: SZ0 - .36, z1: SZ0 + 4 * P + .36 };   // x −2.91…−0.51, z −6.56…−2.48
+const stW = STK.x1 - STK.x0, stD = STK.z1 - STK.z0, stX = (STK.x0 + STK.x1) / 2, stZ = (STK.z0 + STK.z1) / 2;
+add(box(stW - .1, 3 * CY - .1, stD - .1), SAW, stX, (3 * CY - .1) / 2, stZ);              // packed sawdust in the gaps, 5 cm inside the block faces
+for (let iy = 0; iy < 3; iy++) add(box(stW, .1, stD), SAW, stX, .5 + iy * CY + .05, stZ);   // a layer on each course: .50–.60, 1.10–1.20, 1.70–1.80
+const TOP = 3 * CY - .1 + .1;                                                                // 1.80: top of the stack
+const dome = (p, x, y, z, sx, sy, sz, m = SAW) => { const me = adder(p)(new THREE.SphereGeometry(1, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), m, x, y, z); me.scale.set(sx, sy, sz); return me; };
+dome(SHED, stX, TOP, -4.95, 1.0, .38, 1.45);                                                 // the bank on top, kept clear of the front blocks
+dome(SHED, .9, 0, -1.0, .4, .2, .45); dome(SHED, -2.25, 0, -1.55, .55, .26, .45); dome(SHED, .55, 0, -3.9, .55, .16, .7);   // heaps on the floor, none touching a wall or the stack
+add(iceGeo, ICE, 1.95, .25, -3.4).rotation.y = .5;                                          // a loose block on the floor
+const SHOVEL = new THREE.Group(); SHOVEL.position.set(2.86, 0, -2.0); SHOVEL.rotation.z = .12; SHED.add(SHOVEL);   // leaning on the right wall (inner face x 3.0)
+adder(SHOVEL)(new THREE.CylinderGeometry(.03, .03, 1.3, 8), BEAM, 0, .62 + .38, 0);
+adder(SHOVEL)(box(.3, .38, .04), new THREE.MeshStandardMaterial({ color: '#7d7a76', roughness: .5, metalness: .3 }), 0, .19, 0).rotation.y = Math.PI / 2;
+// two crates the hero stands on to pour (shot 8), against the stack's right-front corner without touching it
+const CRATE = mat(planks('#8a6038', { n: 4, seed: 14 }));
+const CRATES = new THREE.Group(); SHED.add(CRATES); adder(CRATES)(box(.7, .55, .6), CRATE, -.12, .275, -2.12); adder(CRATES)(box(.62, .55, .55), CRATE, -.12, .825, -2.12);   // brought in for the pour (hidden while he lifts the block)
+const CRATE_TOP = 1.1;
+// the block he puts on the stack (front, right column, on the top layer), and the sawdust he pours on it
+const SLOT = new THREE.Vector3(SX0 + 2 * P, TOP + .25, SZ0 + 4 * P);                          // (−0.87, 2.05, −2.84)
+const newBlock = add(iceGeo, ICE, SLOT.x, SLOT.y, SLOT.z);
+const pourN = 600, pourPos = new Float32Array(pourN * 3), pourGeo = new THREE.BufferGeometry(); pourGeo.setAttribute('position', new THREE.BufferAttribute(pourPos, 3));
+const pour = new THREE.Points(pourGeo, new THREE.PointsMaterial({ color: '#e6b574', size: .06, transparent: true, depthWrite: false })); pour.frustumCulled = false; SHED.add(pour);
+const pourMound = dome(SHED, SLOT.x + .1, SLOT.y + .25, SLOT.z + .15, .2, .02, .18);   // grows where the stream lands, inside the block's top face
+// the pour: a falling stream from the bucket's mouth (a point of the drawing, in world space) to the top of the block
+function pourAt(t, from) {
+  const r = mulberry(4), to = new THREE.Vector3(SLOT.x + .12, SLOT.y + .27, SLOT.z + .22), c = new THREE.Vector3().lerpVectors(from, to, .25); c.y = from.y + .06;
+  for (let i = 0; i < pourN; i++) {
+    const s = (r() + t * 1.5) % 1, u = 1 - s, sp = .015 + s * .07;
+    pourPos[i * 3] = u * u * from.x + 2 * u * s * c.x + s * s * to.x + (r() - .5) * sp;
+    pourPos[i * 3 + 1] = u * u * from.y + 2 * u * s * c.y + s * s * to.y + (r() - .5) * sp * .5;
+    pourPos[i * 3 + 2] = u * u * from.z + 2 * u * s * c.z + s * s * to.z + (r() - .5) * sp;
+  }
   pourGeo.attributes.position.needsUpdate = true;
 }
 
@@ -80,7 +99,7 @@ function pourAt(t) {
 const STREET = group(), adds = adder(STREET);
 const DIRT = sawdust('#e0ae6a', { seed: 31, rep: [12, 10] });
 const GROUND = new THREE.MeshStandardMaterial({ map: DIRT, roughness: 1 });
-adds(new THREE.PlaneGeometry(40, 30).rotateX(-Math.PI / 2), GROUND, 0, -.01, -20, { cast: false });
+adds(new THREE.PlaneGeometry(40, 27.7).rotateX(-Math.PI / 2), GROUND, 0, 0, -21.15, { cast: false });   // z −7.3…−35: starts at the back wall's outer face, never under the shed floor
 const HOUSE = [];
 for (const [x, w, h, c] of [[-6.5, 5, 6, '#f0b06a'], [.8, 6, 7.2, '#e9c48a'], [7.5, 5, 5.6, '#d98f5c'], [14, 6, 6.4, '#efc27c']]) {
   const hm = new THREE.MeshStandardMaterial({ map: plaster(c, { seed: x + 50 }), roughness: .9 }); adds(box(w, h, 4), hm, x, h / 2, -18); HOUSE.push(hm);
@@ -89,7 +108,10 @@ for (const [x, w, h, c] of [[-6.5, 5, 6, '#f0b06a'], [.8, 6, 7.2, '#e9c48a'], [7
   adds(box(1.1, 2.1, .1), new THREE.MeshStandardMaterial({ color: '#6e3a24' }), x + w * .3, 1.05, -15.97);
 }
 STREET.traverse(m => { if (m.isMesh && m.position.z < -15) m.castShadow = false; });   // the far houses must not shade the street the door looks onto
-adds(new THREE.CylinderGeometry(.01, 5.4, 1.6, 4, 1), mat(planks('#5a3a22', { n: 12, seed: 41 })), 0, 5.2, -3).rotation.y = Math.PI / 4;
+{ const RM = mat(planks('#5a3a22', { n: 12, seed: 41, rep: [1, 3] })), rise = 3.45 * Math.tan(Math.PI / 6);   // gable roof over the whole shed (x ±3.3, z −7.3…+2.2)
+  for (const sd of [-1, 1]) { const r = adds(box(3.95, .14, 10.1), RM, sd * 1.65, 4.4 + rise / 2 + .05, -2.55); r.rotation.z = -sd * Math.PI / 6; }
+  const tri = new THREE.Shape([new THREE.Vector2(-3.3, 0), new THREE.Vector2(3.3, 0), new THREE.Vector2(0, 3.3 * Math.tan(Math.PI / 6))]);
+  const gab = adds(new THREE.ShapeGeometry(tri), WALL2, 0, 4.4, -7.31); gab.rotation.y = Math.PI; }
 const signOver = adds(new THREE.PlaneGeometry(2.2, .7), new THREE.MeshStandardMaterial({ map: signTex([['ICE HOUSE', 165, 120]], { w: 1024, h: 330 }), roughness: .8 }), (DX0 + DX1) / 2, 3.25, -7.32);
 signOver.rotation.y = Math.PI;
 
@@ -111,6 +133,7 @@ for (let i = 0; i < 26; i++) {
   for (let k = 0; k < 3; k++) addl(new THREE.ConeGeometry((.9 - k * .22) * s, 1.1 * s, 8), PINE, x, (.9 + k * .6) * s, z);
   addl(new THREE.ConeGeometry(.3 * s, .35 * s, 8), SNOW, x, 2.25 * s, z);
 }
+addl(box(80, .4, 50), SNOW, LX, -.12, -37, { cast: false });   // the shore: snow ground from z −12 back, 8 cm above the ice
 for (let i = 0; i < 9; i++) mound(LAKE, LX - 20 + i * 5, 0, -12.5 + (R() - .5) * 2, 2.6, .7 + R() * .4, 1.6, SNOW);
 for (let i = 0; i < 5; i++) mound(LAKE, LX - 40 + i * 20, -2, -45, 14, 8 + R() * 5, 8, new THREE.MeshStandardMaterial({ color: '#dbe7f3', roughness: 1 }));
 const snowLake = fall(LAKE, { box: new THREE.Box3(V(LX - 8, 0, -12), V(LX + 8, 7, 3)), n: 500, size: 5, v: .7 });
@@ -148,7 +171,7 @@ const bowlPts = []; for (let i = 0; i <= 12; i++) { const u = i / 12; bowlPts.pu
 addk(new THREE.LatheGeometry(bowlPts, 32), new THREE.MeshStandardMaterial({ color: '#e9e2d2', roughness: .35, side: THREE.DoubleSide }), KX - .2, .95, .1);
 const soup = addk(new THREE.CircleGeometry(.4, 32).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#a9d4df', roughness: .1, emissive: '#3c7c90', emissiveIntensity: .2 }), KX - .2, 1.1, .1, { cast: false });
 const cube = addk(new RoundedBoxGeometry(.3, .3, .3, 3, .05), ICE, KX - .2, 1.2, .1);
-const steam = dust(KIT, { box: new THREE.Box3(V(KX - .5, 1.2, -.1), V(KX + .1, 1.9, .3)), n: 60, col: '#ffffff', size: 9, seed: 73 });
+const steam = dust(KIT, { box: new THREE.Box3(V(KX - .32, 1.18, .02), V(KX - .08, 1.5, .18)), n: 22, col: '#cfd8dc', size: 5, seed: 73 });   // a faint wisp over the bowl, not snow
 const kitLamp = new THREE.PointLight('#ffc27a', 0, 6, 1.5); kitLamp.position.set(KX - .8, 2.6, 1.2); kitLamp.castShadow = true; KIT.add(kitLamp);
 
 // ————————————————— the light rig, shared; each shot sets its colour key —————————————————
@@ -250,29 +273,32 @@ const SHOTS = [
     const m = ss(seg(t, WT("it'll") - .1, WT('june') + .6)); cube.scale.set(1 - m * .55, Math.max(.05, 1 - m * .9), 1 - m * .55); cube.position.y = 1.1 + .15 * cube.scale.y; cube.rotation.y = m * .4; soup.position.y = 1.06 + m * .06;
     cam(V(KX + .35, 1.85, 2.0), V(KX + .1, 1.72, 1.5), V(KX - .2, 1.45, -.5), V(KX - .2, 1.48, -.55), eo(u)); FOCUS = V(KX - .2, 1.2, .1); APER = 3.2;
   } },
-  { t: LINE('l4'), f(t, u) {   // So he stacked it in a wooden shed — winter key; a block lowered onto the stack; orbit
-    show('SHED', 'STREET'); setKey('shedW', V(0, 0, -3));
-    const d = eo(seg(t, LINE('l4'), LINE('l4') + 1.1)); newBlock.visible = true; newBlock.position.set(-1.0, lerp(2.6, 1.98, d), -2.2);
-    place(hero, -.15, 0, -1.6).set({ ...HERO, prop: null, expr: 'neutral', arms: { l: [2.2 - d * .5, 260], r: [2.2 - d * .5, 260] }, keyDir: 1 });
-    const a = lerp(.75, .45, eo(u)); camera.position.set(-1 + Math.sin(a) * 4.2, lerp(1.9, 1.65, u), -2.2 + Math.cos(a) * 4.2); camera.lookAt(-.4, 1.4, -2.6);
-    FOCUS = V(-.5, 1.5, -2); APER = 2;
+  { t: LINE('l4'), f(t, u) {   // So he stacked it in a wooden shed — winter key; he lifts the block onto the stack (it lands in its slot on "shed"); orbit
+    show('SHED', 'STREET'); setKey('shedW', V(0, 0, -3)); CRATES.visible = false;
+    const placed = t >= WT('shed');
+    newBlock.visible = placed;
+    place(hero, SLOT.x, 0, STK.z1 + .3).set({ ...HERO, prop: placed ? null : 'blockUp', expr: placed ? 'smug' : 'neutral', arms: placed ? { l: [.25, 300], r: [-.25, 300] } : { l: [3.35, 300], r: [3.35, 300] }, keyDir: 1 });
+    const a = lerp(.95, .6, eo(u)); camera.position.set(SLOT.x + Math.sin(a) * 3.6, lerp(1.75, 1.55, u), STK.z1 + .3 + Math.cos(a) * 3.6); camera.lookAt(SLOT.x - .45, 1.3, STK.z1 - .2);
+    FOCUS = V(SLOT.x, 1.4, STK.z1 + .3); APER = 2;
   } },
-  { t: WT('and', 1), f(t, u) {   // and buried it in sawdust — the pour; tilt down following it
+  { t: WT('and', 1), f(t, u) {   // and buried it in sawdust — on the crates, he pours from a bucket onto the block; tilt down following the stream
     show('SHED', 'STREET'); setKey('shedW', V(0, 0, -3));
-    newBlock.visible = true; newBlock.position.set(-1.0, 1.98, -2.2); bucket.visible = true; pour.visible = true; pourAt(t);
-    const g = eo(seg(t, WT('buried'), WT('sawdust') + .6)); pourMound.visible = true; pourMound.scale.set(.5 + g * .15, .05 + g * .32, .5 + g * .15);
-    place(hero, .3, 0, -1.3).set({ ...HERO, prop: null, expr: 'smug', arms: { l: [2.7, 230], r: [2.5, 230] }, keyDir: 1 });
-    cam(V(.4, 3.0, .4), V(.6, 2.2, .2), V(-1.6, 3.0, -2.4), V(-1.6, 1.9, -2.4), eo(u)); FOCUS = V(-1.6, 2.3, -2.4); APER = 2.2;
+    newBlock.visible = true;
+    hero.contact.scale.setScalar(.72); place(hero, -.12, CRATE_TOP, -2.12).set({ ...HERO, prop: 'bucket', expr: 'smug', arms: { l: [3.4, 300], r: [2.6, 250] }, keyDir: 1 });
+    cam(V(1.1, 2.9, .3), V(1.0, 2.55, .15), V(-.6, 2.7, -2.5), V(-.75, 2.3, -2.7), eo(u));   // set the camera first: the mouth's world point depends on the card's yaw
+    const m = hero.anchor; pour.visible = true; pourAt(t, hero.point(camera, m[0], m[1]));
+    const g = eo(seg(t, WT('buried'), WT('sawdust') + .6)); pourMound.visible = true; pourMound.scale.set(.2 + g * .1, .02 + g * .16, .18 + g * .1);
+    FOCUS = V(-.6, 2.4, -2.6); APER = 2.2;
   } },
-  { t: LINE('l5'), f(t, u) {   // Wait. Sawdust? — hard stop on the mound, slow push into the silence
-    show('SHED', 'STREET'); setKey('shedW', V(0, 0, -3)); hemi.intensity = 1.5; bounce.intensity = 4; bounce.position.set(-1.1, 2.6, -1.6); GU.sat.value = .85;
-    newBlock.visible = true; newBlock.position.set(-1.0, 1.98, -2.2); pourMound.visible = true; pourMound.scale.set(.65, .37, .65);
-    cam(V(-.9, 2.65, -.55), V(-1.05, 2.55, -.85), V(-1.7, 2.0, -2.4), V(-1.72, 2.0, -2.4), u); FOCUS = V(-1.72, 2.05, -2.4); APER = 3.2;
+  { t: LINE('l5'), f(t, u) {   // Wait. Sawdust? — hard stop on the little heap on the block, slow push into the silence
+    show('SHED', 'STREET'); setKey('shedW', V(0, 0, -3)); hemi.intensity = 1.5; bounce.intensity = 4; bounce.position.set(-.3, 2.9, -1.8); GU.sat.value = .85;
+    newBlock.visible = true; pourMound.visible = true; pourMound.scale.set(.3, .18, .28);
+    cam(V(-.2, 2.95, -1.55), V(-.3, 2.85, -1.8), V(SLOT.x + .05, 2.35, SLOT.z + .1), V(SLOT.x + .05, 2.35, SLOT.z + .1), u); FOCUS = V(SLOT.x + .1, 2.4, SLOT.z + .15); APER = 3;
   } },
   { t: LINE('l6'), f(t, u) {   // You see, sawdust is packed with tiny pockets of trapped air — crane down past the roof into the cut-away
     show('SEC'); setKey('sec', V(SX, 0, -3), 10);
     const c = eo(seg(t, LINE('l6'), WT('tiny') + .2));
-    cam(V(SX + 1.5, 11, 5), V(SX + 2.65, 1.8, 3.2), V(SX + .5, 3.6, -2.5), V(SX + 2.7, 1.7, 0), c); FOCUS = V(SX + 2.7, 1.7, 0); APER = c > .8 ? 2 : 1;
+    cam(V(SX + 1.5, 11, 5), V(SX + 2.65, 1.8, 3.2), V(SX + .5, 3.6, -2.5), V(SX + 2.7, 1.7, 0), c); FOCUS = V(SX + 2.7, 1.7, 0); APER = lerp(1, 2, ss(seg(c, .6, 1)));
     airMat.opacity = ss(seg(t, WT('pockets'), WT('air') + .2));
   } },
   { t: WT('and', 2), f(t, u) {   // and trapped air barely passes heat — arrows from the sun die in the sawdust
@@ -294,7 +320,7 @@ const SHOTS = [
     show('SHED', 'STREET'); setKey('street', V(1, 0, -10), 14); doorPivot.rotation.y = 0;
     folk.forEach((c, i) => place(c, [.85, 2.25, .3, 2.8][i], 0, [-10.9, -10.6, -9.5, -9.3][i]).set({ expr: 'hot', arms: { l: [.15, 300], r: [-.15, 300] }, keyDir: -1 }));
     place(rival, 1.55, 0, -8.5).set({ expr: 'hot', prop: 'fan', arms: { l: [.15, 300], r: [2.5, 200] }, keyDir: -1 });
-    cam(V(1.5, 9.5, -15.2), V(1.5, 2.4, -13.6), V(1.5, 0, -9.6), V(1.5, 1.05, -8), eo(u)); FOCUS = V(1.5, 1, -10); APER = u > .6 ? 1.2 : .3;
+    cam(V(1.5, 9.5, -15.2), V(1.5, 2.4, -13.6), V(1.5, 0, -9.6), V(1.5, 1.05, -8), eo(u)); FOCUS = V(1.5, 1, -10); APER = lerp(.3, 1.2, ss(seg(u, .4, .9)));
   } },
   { t: WT('he', 2), f(t, u) {   // he opened the door — inside, the door swings and the August light floods in
     show('SHED', 'STREET'); setKey('shedA', V(0, 0, -3));
@@ -316,12 +342,22 @@ const shotAt = t => { let i = 0; while (i + 1 < SHOTS.length && t >= SHOTS[i + 1
 
 function reset() {
   CARDS.forEach(c => c.mesh.visible = false);
-  newBlock.visible = bucket.visible = pour.visible = pourMound.visible = false;
+  newBlock.visible = pour.visible = pourMound.visible = false; CARDS.forEach(c => c.contact.scale.setScalar(1)); CRATES.visible = true;
   airMat.opacity = 0; OUTER.emissiveIntensity = 0; ARROWS.forEach(a => a.visible = false);
   doorPivot.rotation.y = 1.0; ray.material.uniforms.amt.value = .12; motes.visible = true; bounce.position.set(.8, .6, -3.2);
   cube.scale.set(1, 1, 1); cube.position.y = 1.2; soup.position.y = 1.06;
 }
-function draw(i, t) {
+// Temporal anti-aliasing + motion blur, on the GPU: each frame is the weighted sum of N samples rendered into a half-float buffer,
+// each jittered by a fraction of a pixel and spread over a half-frame shutter (2.4 frames on the whip-pan); cross-dissolves are weights too.
+post.composer.renderToScreen = false;
+const QV = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }';
+const accRT = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, depthBuffer: false });
+const accQ = new FullScreenQuad(new THREE.ShaderMaterial({ uniforms: { tex: { value: null }, w: { value: 1 } }, vertexShader: QV,
+  fragmentShader: 'uniform sampler2D tex; uniform float w; varying vec2 vUv; void main(){ gl_FragColor = vec4(texture2D(tex, vUv).rgb * w, 1.); }',
+  blending: THREE.AdditiveBlending, transparent: true, depthTest: false, depthWrite: false }));
+const outQ = new FullScreenQuad(new THREE.ShaderMaterial({ uniforms: { tex: { value: accRT.texture } }, vertexShader: QV,
+  fragmentShader: 'uniform sampler2D tex; varying vec2 vUv; void main(){ gl_FragColor = vec4(texture2D(tex, vUv).rgb, 1.); }', depthTest: false, depthWrite: false }));
+function draw(i, t, jx, jy, w) {
   reset();
   if (QS.get('shot') === 'frame') SHOTS[14].f(WT('opened') + 1.5, 1);
   else { const s = SHOTS[i]; s.f(t, clamp((t - s.t) / (s.t1 - s.t))); }
@@ -329,20 +365,29 @@ function draw(i, t) {
   floaters.forEach((b, j) => { b.position.y = -.05 + Math.sin(t * 2 + j) * .015; b.rotation.y = Math.sin(t * .7 + j) * .05; });
   for (const c of CARDS) if (c.mesh.visible) c.face(camera, KEY.tint, 1, KEY.rim, KEY.rk);
   post.dof.focus = camera.position.distanceTo(FOCUS); post.dof.aper = APER; post.dof.maxCoc = 16; post.dof.ink.far = 34; post.dof.ink.k = .0028;
+  camera.setViewOffset(W, H, jx, jy, W, H);   // sub-pixel jitter
   post.composer.render();
+  camera.clearViewOffset();
+  const ac = renderer.autoClear; renderer.autoClear = false;
+  renderer.setRenderTarget(accRT); accQ.material.uniforms.tex.value = post.composer.readBuffer.texture; accQ.material.uniforms.w.value = w; accQ.render(renderer);
+  renderer.autoClear = ac;
 }
 const XF = .1;   // 3-frame cross-dissolve centred on each cut (the whip-pan shot enters with motion blur instead)
-function render(t) {
+function sample(t, jx, jy, w) {
   const i = shotAt(t), s = SHOTS[i];
-  gm.clearRect(0, 0, W, H); mixC.style.opacity = 0;
-  if (s.blur && t < s.t + s.blur) {   // whip-pan: average sub-frames into the mix layer
-    const n = 5; for (let k = 0; k < n; k++) { draw(i, Math.max(s.t, t - k / 30 / n * 2.4)); gm.globalAlpha = 1 / (k + 1); gm.drawImage(renderer.domElement, 0, 0); }
-    gm.globalAlpha = 1; mixC.style.opacity = 1;
-  } else if (i > 0 && t < s.t + XF / 2) {   // just after a cut: the outgoing shot fades out over the incoming one
-    draw(i - 1, t); gm.drawImage(renderer.domElement, 0, 0); mixC.style.opacity = 1 - (t - (s.t - XF / 2)) / XF; draw(i, t);
-  } else if (i + 1 < SHOTS.length && t > s.t1 - XF / 2 && !SHOTS[i + 1].blur) {   // just before a cut: the incoming shot fades in
-    draw(i + 1, t); gm.drawImage(renderer.domElement, 0, 0); mixC.style.opacity = (t - (s.t1 - XF / 2)) / XF; draw(i, t);
-  } else draw(i, t);
+  if (i > 0 && t < s.t + XF / 2 && !s.blur) { const a = 1 - (t - (s.t - XF / 2)) / XF; draw(i, t, jx, jy, w * (1 - a)); draw(i - 1, t, jx, jy, w * a); }
+  else if (i + 1 < SHOTS.length && t > s.t1 - XF / 2 && !SHOTS[i + 1].blur) { const a = (t - (s.t1 - XF / 2)) / XF; draw(i, t, jx, jy, w * (1 - a)); draw(i + 1, t, jx, jy, w * a); }
+  else draw(i, t, jx, jy, w);
+}
+const NS = +(QS.get('ss') || 6), JIT = [[.25, -.17], [-.25, .17], [.08, .33], [-.08, -.33], [.42, .08], [-.42, -.08], [.17, .42], [-.17, -.42]];
+function render(t) {
+  const s = SHOTS[shotAt(t)], whip = s.blur && t < s.t + s.blur, shutter = whip ? 2.4 / 30 : .5 / 30;
+  renderer.setRenderTarget(accRT); renderer.setClearColor(0x000000, 1); renderer.clear();
+  for (let k = 0; k < NS; k++) {
+    const tk = whip ? Math.max(s.t, t - k / NS * shutter) : Math.max(0, Math.min(END - .001, t + (k / NS - .5) * shutter));
+    const [jx, jy] = NS > 1 ? JIT[k % JIT.length] : [0, 0]; sample(tk, jx, jy, 1 / NS);
+  }
+  renderer.setRenderTarget(null); outQ.render(renderer);
   // caption: the word being spoken, cut on its first syllable, cleared in pauses
   g2.clearRect(0, 0, W, H); window.__cap = null;
   if (QS.has('nocap')) return;
