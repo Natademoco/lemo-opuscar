@@ -100,6 +100,7 @@ Users may name a style in English, in Chinese, by a name it had before (Formerly
 | Mid-century Cartoon | 50s 扁平卡通 | [`midcentury-toon`](midcentury-toon/STYLE.md) | *Meet Pip* |  |
 | Comic History Cartoon ✦ | 搞笑历史卡通 | [`comic-history`](comic-history/STYLE.md) | *One Piece of Paper* |  |
 | Manga Panels ✦ | 黑白漫画分格 | [`manga-panels`](manga-panels/STYLE.md) | *KOMA ONE: Thirty Frames a Second* |  |
+| Hidden History Toon | 冷知识卡通 | [`hidden-history-toon`](hidden-history-toon/STYLE.md) | *Ice in August* |  |
 
 ## Games · 电子游戏
 

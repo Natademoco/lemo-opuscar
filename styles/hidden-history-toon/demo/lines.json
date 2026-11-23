@@ -1,0 +1,56 @@
+[
+ {
+  "id": "l1",
+  "text": "He sliced a frozen lake into blocks, and swore he'd sell it in August.",
+  "voice": "am_michael",
+  "speed": 1.18
+ },
+ {
+  "id": "l2",
+  "text": "The whole town laughed at him.",
+  "voice": "am_michael",
+  "speed": 1.05
+ },
+ {
+  "id": "l3",
+  "text": "Ice, in August? It'll be soup by June!",
+  "voice": "bm_george",
+  "speed": 1.08
+ },
+ {
+  "id": "l4",
+  "text": "So he stacked it in a wooden shed, and buried it in sawdust.",
+  "voice": "am_michael",
+  "speed": 1.15
+ },
+ {
+  "id": "l5",
+  "text": "Wait. Sawdust?",
+  "voice": "am_michael",
+  "speed": 1.0
+ },
+ {
+  "id": "l6",
+  "text": "You see, sawdust is packed with tiny pockets of trapped air, and trapped air barely passes heat.",
+  "voice": "am_michael",
+  "speed": 1.22
+ },
+ {
+  "id": "l7",
+  "text": "The sun cooks the walls, but the cold stays locked inside.",
+  "voice": "am_michael",
+  "speed": 1.2
+ },
+ {
+  "id": "l8",
+  "text": "So in August, when the whole town was melting, he opened the door,",
+  "voice": "am_michael",
+  "speed": 1.18
+ },
+ {
+  "id": "l9",
+  "text": "and the first in line was the man who laughed when",
+  "voice": "am_michael",
+  "speed": 1.15
+ }
+]

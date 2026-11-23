@@ -47,7 +47,7 @@ If the user hasn't picked a style:
 - Then ask them to type the name. The list goes in your own message (a command's output isn't shown to them), and the question is plain text, not `AskUserQuestion`: its few options would hide the rest of the list.
 
 <!-- style-list:start -->
-All 99 styles · 全部风格:
+All 100 styles · 全部风格:
 
 - **剪辑纪实 Edit & Documentary** (8): 字幕新闻 Caption News, 1920s 新闻影片 1920s Newsreel, 实时倒计时分屏 Live Countdown Split-screen, 城市交响曲 City Symphony, 视觉调查 Visual Investigation, 构成主义蒙太奇 Constructivist Montage, 体育战术板 Sports Telestrator, 电视新闻包装 Broadcast News Package
 - **绘画插画 Painting & Illustration** (5): 蜡笔儿童绘本 Crayon Picture Book, 水彩笔刷 Watercolor Brush, 油画厚涂 Impasto Oil Painting, 钢笔淡彩 Urban Sketch · Pen & Wash, 彩铅科普插画 Colored-Pencil Science Illustration
@@ -56,7 +56,7 @@ All 99 styles · 全部风格:
 - **印刷版画 Print & Printmaking** (8): 孔版印刷 Risograph Print, 网点档案 Halftone Dossier, 木刻版画 Woodcut Print, 铜版画 Copperplate Engraving, 丝印旅行海报 Silkscreen Travel Poster, 刮版画长镜头 Scratchboard Long Take, 波普艺术 Pop Art, 复古版画拼贴 Vintage Engraving Collage
 - **平面排版 Graphic & Type** (8): 瑞士动态排版 Swiss Motion Graphics, 60s 间谍片头 60s Spy Title Sequence, 装饰艺术 Art Deco, 象形运动图形 Pictogram Motion, 包豪斯几何 Bauhaus Shapes, 扁平尺度漫游 Scale Zoom Explainer, 文字闪切 Text Flash Cuts ✦, 剪影律动 Silhouette Rhythm
 - **线稿图解 Line Diagrams** (8): 工程蓝图 Blueprint, 等距信息图 Isometric Infographic, 产品拆解 Exploded Teardown, 线稿剖面图解 Line-Art Cutaway, 分色机械图解 Color-Coded Mechanism, 说明书插画 Instruction Manual Art, 笔式绘图仪 Pen Plotter, 流水线图解 Assembly-Line Diagram
-- **卡通动画 Cartoons** (6): 1930s 橡皮管卡通 1930s Rubber Hose Cartoon, 80 年代赛璐璐动画 80s Cel Anime, 科幻情景喜剧卡通 Sci-Fi Sitcom Toon, 50s 扁平卡通 Mid-century Cartoon, 搞笑历史卡通 Comic History Cartoon ✦, 黑白漫画分格 Manga Panels ✦
+- **卡通动画 Cartoons** (7): 1930s 橡皮管卡通 1930s Rubber Hose Cartoon, 80 年代赛璐璐动画 80s Cel Anime, 科幻情景喜剧卡通 Sci-Fi Sitcom Toon, 50s 扁平卡通 Mid-century Cartoon, 搞笑历史卡通 Comic History Cartoon ✦, 黑白漫画分格 Manga Panels ✦, 冷知识卡通 Hidden History Toon
 - **电子游戏 Games** (4): 16-bit 像素 RPG 16-bit Pixel RPG, 2.5D 像素 2.5D Pixel Art, 微游戏快闪 Microgame Frenzy, 节奏综艺 Rhythm Game Show
 - **胶片录像 Film & Tape** (5): CRT 字符终端 CRT ASCII Terminal, 1920s 默片 1920s Silent Film, 后室录像带 Liminal Found Footage, 胶片直刻 Scratch Film, 双重曝光 Double Exposure
 - **屏幕界面 Screens & Interfaces** (6): 暗色科技发布 Dark Tech Keynote, 像素小人录屏 Mascot Screencast, 科幻全息界面 Sci-fi Hologram HUD, 桌面卡片穿梭 Tabletop App Flythrough, 表格动画 Spreadsheet Film, 1-bit 点阵 1-bit Dither

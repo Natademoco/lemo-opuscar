@@ -1,0 +1,28 @@
+Ice in August — Hidden History Toon demo film · credits
+
+Everything visual is made in code (three.js, Canvas2D): sets, painted textures, the cast, light, particles, captions. No image assets.
+
+Fonts
+- Montserrat — Julieta Ulanovsky and contributors — SIL Open Font License 1.1 (fonts/OFL-Montserrat.txt), from github.com/google/fonts
+
+Voice
+- Kokoro-82M TTS (voices am_michael, bm_george; laughs am_adam, af_bella, bm_lewis, af_sarah), Apache-2.0, via kokoro-onnx
+- Speech check: faster-whisper (MIT)
+
+Music (original composition, mix.py)
+- Samples (CC0): VS Chamber Orchestra: Community Edition (Versilian Studios / Sam Gossner), Versilian Community Sample Library (Versilian Studios)
+
+Sound effects
+- All synthesized in mix.py with the library's core/audio/sfx.py (no recorded samples)
+
+Facts
+- 19th-century ice harvesting and sawdust-insulated icehouses (general history; no single source quoted). The calendar's 1806 is the year the first commercial ice shipments left Boston.
+
+Libraries
+- three.js (MIT), playwright-core (Apache-2.0), ffmpeg (LGPL/GPL), numpy and scipy (BSD)
+
+Code from the Lemo-Opuscar library (licence notice, not a credit in the film)
+- post.js is adapted from styles/tilt-shift/demo/post.js; the face ideas in cast.js follow styles/scifi-toon/demo/chars.js; the build uses the library's core/ tools.
+  Lemo-Opuscar — Copyright (c) 2026 SecondFirst Pty Ltd, trading as LemoLab — MIT License
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

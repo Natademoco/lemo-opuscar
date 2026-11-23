@@ -1,0 +1,6 @@
+[
+ {"id": "h1", "text": "Ha ha ha ha!", "voice": "am_adam", "speed": 1.15},
+ {"id": "h2", "text": "Ha ha ha!", "voice": "af_bella", "speed": 1.2},
+ {"id": "h3", "text": "Hah! Ha ha ha!", "voice": "bm_lewis", "speed": 1.1},
+ {"id": "h4", "text": "Ha ha ha ha ha!", "voice": "af_sarah", "speed": 1.25}
+]

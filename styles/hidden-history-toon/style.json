@@ -1,0 +1,19 @@
+{
+ "slug": "hidden-history-toon",
+ "num": "100",
+ "en": "Hidden History Toon",
+ "cn": "冷知识卡通",
+ "category_en": "Cartoons",
+ "category_cn": "卡通动画",
+ "film": "Ice in August",
+ "film_cn": "八月的冰",
+ "line": "He sliced a frozen lake into blocks and swore he'd sell it in August; the town laughed, until the sawdust explained itself.",
+ "line_cn": "他把结冰的湖切成冰块，发誓八月拿来卖；全镇都笑他，直到锯末揭晓了答案。",
+ "uses": [
+  "Weird-history Shorts",
+  "Science explainers",
+  "Vertical social videos"
+ ],
+ "frame_sec": 25.5,
+ "dur": 28.3
+}

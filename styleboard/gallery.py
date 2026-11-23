@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from site_config import SITE_URL, REPO, REPO_URL, FILMS_URL, THANKS_URL   # noqa: F401 (SITE_URL, REPO: for whoever reads them from here)
 
 # the newest release's styles: a small "New" on their cards (the site) and the README's cards; replace the list at each release
-NEW = frozenset(('colored-pencil', 'sketchnote', 'stick-explainer', 'ipad-sketch', 'marker-paper', 'gilded-illumination', 'pop-art', 'vintage-collage', 'bauhaus-shapes', 'flat-space-explainer', 'text-flash-cuts', 'silhouette-rhythm', 'hardcore-info', 'precise-mechanism', 'instruction-manual', 'pen-plotter', 'assembly-line-diagram', 'comic-history', 'manga-panels', 'scratch-film', 'double-exposure', 'spreadsheet', 'one-bit-dither', 'firefly-pointillism', 'flow-field', 'oscilloscope-math', 'neon-tubes', 'crayon-world', 'security-xray', 'dark-documentary', 'thermal-camera', 'map-explainer', 'pip-simulation'))
+NEW = frozenset(('colored-pencil', 'sketchnote', 'stick-explainer', 'ipad-sketch', 'marker-paper', 'gilded-illumination', 'pop-art', 'vintage-collage', 'bauhaus-shapes', 'flat-space-explainer', 'text-flash-cuts', 'silhouette-rhythm', 'hardcore-info', 'precise-mechanism', 'instruction-manual', 'pen-plotter', 'assembly-line-diagram', 'comic-history', 'manga-panels', 'scratch-film', 'double-exposure', 'spreadsheet', 'one-bit-dither', 'firefly-pointillism', 'flow-field', 'oscilloscope-math', 'neon-tubes', 'crayon-world', 'security-xray', 'dark-documentary', 'thermal-camera', 'map-explainer', 'pip-simulation', 'hidden-history-toon'))
 
 # One sentence per category on what its pictures look like (English, Chinese). Keys are build.py CATEGORIES' English names.
 CAT_DESC = {
